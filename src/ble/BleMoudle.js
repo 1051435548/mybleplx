@@ -166,7 +166,8 @@ export default class BleModule {
         if (value === '0D0A') {
             formatValue = value;
         } else {
-            formatValue = new Buffer(value, 'base64').toString('ascii');
+            formatValue = value.split("").map(char => char.charCodeAt(0));
+            console.log("write: " + Buffer.from(formatValue).toString("base64"))
         }
         let transactionId = 'write';
         return new Promise((resolve, reject) => {
@@ -174,7 +175,7 @@ export default class BleModule {
                 this.peripheralId,
                 this.writeWithResponseServiceUUID[index],
                 this.writeWithResponseCharacteristicUUID[index],
-                formatValue,
+                Buffer.from(formatValue).toString("base64"),
                 transactionId,
             ).then(characteristic => {
                 resolve(characteristic);
@@ -193,7 +194,8 @@ export default class BleModule {
         if (value === '0D0A') {
             formatValue = value;
         } else {
-            formatValue = new Buffer(value, 'base64').toString('ascii');
+            formatValue = value.split("").map(char => char.charCodeAt(0));
+            console.log("withoutResponse: " + formatValue)
         }
         let transactionId = 'writeWithoutResponse';
         return new Promise((resolve, reject) => {
@@ -201,7 +203,7 @@ export default class BleModule {
                 this.peripheralId,
                 this.writeWithoutResponseServiceUUID[index],
                 this.writeWithoutResponseCharacteristicUUID[index],
-                formatValue,
+                Buffer.from(formatValue).toString("base64"),
                 transactionId,
             ).then(characteristic => {
                 resolve(characteristic);
