@@ -24,7 +24,7 @@ export default class BleModule {
         this.manager.destroy();
     }
 
-    alert = (text) =>  {
+    alert = (text) => {
         Alert.alert('提示', text, [{
             text: '确定', onPress: () => {
             },
@@ -84,11 +84,10 @@ export default class BleModule {
      */
     static async fetchServicesAndCharacteristicsForDevice(device) {
         let servicesMap = {};
-        let services = await device.services();
-
+        let services = await device.services();  // this.manager.servicesForDevice()
         for (let service of services) {
             let characteristicsMap = {};
-            let characteristics = await service.characteristics();
+            let characteristics = await service.characteristics();  // this.manager.characteristicsForDevice()
 
             for (let characteristic of characteristics) {
                 characteristicsMap[characteristic.uuid] = {
@@ -166,8 +165,8 @@ export default class BleModule {
         if (value === '0D0A') {
             formatValue = value;
         } else {
-            formatValue = value.split("").map(char => char.charCodeAt(0));
-            console.log("write: " + Buffer.from(formatValue).toString("base64"))
+            formatValue = value.split('').map(char => char.charCodeAt(0));
+            console.log('write: ' + Buffer.from(formatValue).toString('base64'));
         }
         let transactionId = 'write';
         return new Promise((resolve, reject) => {
@@ -175,7 +174,7 @@ export default class BleModule {
                 this.peripheralId,
                 this.writeWithResponseServiceUUID[index],
                 this.writeWithResponseCharacteristicUUID[index],
-                Buffer.from(formatValue).toString("base64"),
+                Buffer.from(formatValue).toString('base64'),
                 transactionId,
             ).then(characteristic => {
                 resolve(characteristic);
@@ -194,8 +193,8 @@ export default class BleModule {
         if (value === '0D0A') {
             formatValue = value;
         } else {
-            formatValue = value.split("").map(char => char.charCodeAt(0));
-            console.log("withoutResponse: " + formatValue)
+            formatValue = value.split('').map(char => char.charCodeAt(0));
+            console.log('withoutResponse: ' + formatValue);
         }
         let transactionId = 'writeWithoutResponse';
         return new Promise((resolve, reject) => {
@@ -203,12 +202,12 @@ export default class BleModule {
                 this.peripheralId,
                 this.writeWithoutResponseServiceUUID[index],
                 this.writeWithoutResponseCharacteristicUUID[index],
-                Buffer.from(formatValue).toString("base64"),
+                Buffer.from(formatValue).toString('base64'),
                 transactionId,
             ).then(characteristic => {
                 resolve(characteristic);
             }).catch(error => {
-                this.alert('writeWithoutResponse fail: ',error.reason);
+                this.alert('writeWithoutResponse fail: ', error.reason);
                 reject(error);
             });
         });

@@ -18,6 +18,8 @@ export default class BlePlx extends Component {
             receiveData: '',
             readData: '',
             isMonitoring: false,
+            isReadRssi: false,
+            rssi: 0,
         };
         this.bluetoothReceiveData = [];
         this.deviceMap = new Map(); //搜索到的蓝牙设备(将id作为键值存入保证不重复)
@@ -115,6 +117,9 @@ export default class BlePlx extends Component {
      * 断开蓝牙连接
      */
     disconnect = () => {
+        this.setState({
+            isReadRSSI: false,
+        });
         BluetoothManager.disconnect()
             .then(response => {
                 this.setState({data: [...this.deviceMap.values()], isConnected: false});
@@ -160,6 +165,33 @@ export default class BlePlx extends Component {
     };
 
     /**
+     * 获取RSSI值
+     * @param isReadRSSI
+     */
+    isReadRssi = (isReadRSSI) => {
+        this.setState({
+            isReadRSSI,
+        });
+
+        if (this.state.isConnected) {
+            this.readRssi(isReadRSSI);
+        }
+    };
+
+    readRssi = (isReadRSSI) => {
+        if (!isReadRSSI) {
+            return;
+        }
+        BluetoothManager.manager.readRSSIForDevice(BluetoothManager.peripheralId)
+            .then(res => {
+                this.setState({
+                    rssi: res.rssi,
+                });
+                this.readRssi(this.state.isReadRSSI);
+            });
+    };
+
+    /**
      * 渲染当设备为空时
      */
     renderEmptyDevice = () => {
@@ -197,6 +229,7 @@ export default class BlePlx extends Component {
     onDisconnect = () => {
         this.disconnectListener = BluetoothManager.manager.onDeviceDisconnected(BluetoothManager.peripheralId, (error, device) => {
             if (error) {
+                this.alert(error.reason);
                 this.setState({
                     devicesData: [...this.deviceMap.values()],
                     isConnected: false,
@@ -239,7 +272,7 @@ export default class BlePlx extends Component {
                 });
             })
             .catch(error => {
-                console.log();
+                console.log(error);
             });
     };
 
@@ -385,8 +418,26 @@ export default class BlePlx extends Component {
         );
     };
 
+    /**
+     * 检测是否有连接蓝牙
+     */
+    isDeviceConnected = () => {
+        if (!BluetoothManager.peripheralId) {
+            this.alert('当前无连接');
+        } else {
+            BluetoothManager.manager.isDeviceConnected(BluetoothManager.peripheralId)
+                .then(isConnect => {
+                    if (isConnect) {
+                        this.alert('已连接设备：' + BluetoothManager.peripheralId);
+                    } else {
+                        this.alert('未连接设备');
+                    }
+                });
+        }
+    };
+
     render() {
-        const {devicesData, isConnected, text, receiveData, readData, writeData, isMonitoring, scaning} = this.state;
+        const {devicesData, isConnected, text, receiveData, readData, writeData, isMonitoring, scaning, rssi, isReadRSSI} = this.state;
         return (
             <View style={styles.container}>
                 <View style={{marginTop: 20}}>
@@ -397,9 +448,18 @@ export default class BlePlx extends Component {
                         <Text
                             style={styles.buttonText}>{scaning ? '正在搜索中...' : isConnected ? '断开蓝牙' : '搜索蓝牙'}</Text>
                     </TouchableOpacity>
-
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={[styles.buttonView, {marginHorizontal: 10, height: 40, alignItems: 'center'}]}
+                        disabled={!isConnected}
+                        onPress={() => this.isReadRssi(!isReadRSSI)}>
+                        <Text style={styles.buttonText}>{isConnected ? isReadRSSI ? '停止获取' : '获取RSSI' : '请先连接设备'}</Text>
+                    </TouchableOpacity>
                     <Text style={{marginLeft: 10, marginTop: 10}}>
                         {isConnected ? '当前连接的设备' : '可用设备'}
+                    </Text>
+                    <Text style={{marginLeft: 10, marginTop: 10}}>
+                        RSSI: {isConnected ? rssi : 0}
                     </Text>
                 </View>
 
@@ -412,6 +472,15 @@ export default class BlePlx extends Component {
                     ListFooterComponent={this.renderFooter()}
                 />
 
+                <View style={{marginTop: 20, marginBottom: 20}}>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={[styles.buttonView, {marginHorizontal: 10, height: 40, alignItems: 'center'}]}
+                        onPress={() => this.isDeviceConnected()}>
+                        <Text
+                            style={styles.buttonText}>是否有连接</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }
